@@ -26,7 +26,7 @@ public class Lights extends SubsystemBase {
         // This sets it to blue need to have a chooser in smart dashboard to see
         // what
         // color we are
-        switch (DriverStation.getAlliance()) {
+        switch (DriverStation.getAlliance().get()) {
             case Blue:
                 spark.set(0.87);
                 break;

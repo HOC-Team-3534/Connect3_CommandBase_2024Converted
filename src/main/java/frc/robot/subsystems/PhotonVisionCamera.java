@@ -26,15 +26,14 @@ public class PhotonVisionCamera extends SubsystemBase {
     public PhotonVisionCamera() {
         try {
             aprilTagFieldLayout = AprilTagFields.k2023ChargedUp.loadAprilTagLayoutField();
-            switch (DriverStation.getAlliance()) {
+            switch (DriverStation.getAlliance().get()) {
                 case Blue:
                     aprilTagFieldLayout.setOrigin(AprilTagFieldLayout.OriginPosition.kBlueAllianceWallRightSide);
                     break;
                 case Red:
                     aprilTagFieldLayout.setOrigin(AprilTagFieldLayout.OriginPosition.kRedAllianceWallRightSide);
                     break;
-                case Invalid:
-
+                default:
                     break;
             }
         } catch (IOException e) {

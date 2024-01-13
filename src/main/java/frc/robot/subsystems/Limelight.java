@@ -65,7 +65,7 @@ public class Limelight extends SubsystemBase {
 		if (getAprilTag() <= 0)
 			return null;
 		double[] botPoseArray;
-		switch (DriverStation.getAlliance()) {
+		switch (DriverStation.getAlliance().get()) {
 			case Blue:
 				if (check && !Arrays.asList(6, 7, 8).contains(getAprilTag()))
 					return null;
@@ -77,10 +77,6 @@ public class Limelight extends SubsystemBase {
 					return null;
 				botPoseArray = (table.getEntry("botpose_wpired").getDoubleArray(new double[7]));
 				break;
-
-			case Invalid:
-				return null;
-
 			default:
 				return null;
 		}
@@ -105,7 +101,7 @@ public class Limelight extends SubsystemBase {
 		if (getAprilTag() <= 0)
 			return null;
 		Translation2d aprilTag;
-		switch (DriverStation.getAlliance()) {
+		switch (DriverStation.getAlliance().get()) {
 			case Blue:
 				if (!Arrays.asList(6, 7, 8).contains(getAprilTag()))
 					return null;
@@ -117,9 +113,6 @@ public class Limelight extends SubsystemBase {
 					return null;
 				aprilTag = aprilTagPositions.get(getAprilTag());
 				break;
-
-			case Invalid:
-				return null;
 
 			default:
 				return null;

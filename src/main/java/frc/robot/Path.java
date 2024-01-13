@@ -1,9 +1,6 @@
 package frc.robot;
 
-import com.pathplanner.lib.PathPlanner;
-import com.pathplanner.lib.PathPlannerTrajectory;
-
-import frc.robot.Constants.Drive.AUTO;
+import com.pathplanner.lib.path.PathPlannerPath;
 
 public enum Path {
     BumpSide_PickUp_PlaceWhileMove_BalanceForward("Bump Side PickUp PlaceWhileMove BalanceForward"),
@@ -18,7 +15,7 @@ public enum Path {
     LoadingZone_DriveForward("Loading Zone Drive Forward");
 
     String pathName;
-    PathPlannerTrajectory path;
+    PathPlannerPath path;
 
     Path() {
         this.pathName = this.name();
@@ -29,11 +26,10 @@ public enum Path {
     }
 
     public void loadPath() {
-        path = PathPlanner.loadPath(pathName, AUTO.kMaxSpeedMetersPerSecond,
-                AUTO.kMaxAccelerationMetersPerSecondSquared);
+        path = PathPlannerPath.fromPathFile(pathName);
     }
 
-    public PathPlannerTrajectory getPath() {
+    public PathPlannerPath getPath() {
         return path;
     }
 }

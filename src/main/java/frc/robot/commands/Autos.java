@@ -34,13 +34,11 @@ public final class Autos {
    */
   public static Command place2FromSides(SwerveDrive swerve, Intake intake, Elevator elevator, Gripper gripper,
       Flipper flipper, Path path1, Path path2) {
-    swerve.setKnownPose(path1.getPath());
-
     var command = moveElevatorAndPlace(RobotContainer.getHeightAutonomous(), elevator, gripper, flipper)
-        .andThen(driveWithIntake(path1, intake, swerve, true))
+        .andThen(driveWithIntake(path1, intake, swerve))
         .andThen(moveElevatorAndPlace(RobotContainer.getHeightAutonomous(), elevator, gripper, flipper));
     if (path2 != null)
-      command = command.andThen(driveWithIntake(path2, intake, swerve, false));
+      command = command.andThen(driveWithIntake(path2, intake, swerve));
     return command;
   }
 
@@ -58,7 +56,6 @@ public final class Autos {
    */
   public static Command place2FromSidesAndBalance(SwerveDrive swerve, Intake intake, Elevator elevator, Gripper gripper,
       Flipper flipper, Path path1) {
-    swerve.setKnownPose(path1.getPath());
     return moveElevatorAndPlace(RobotContainer.getHeightAutonomous(), elevator, gripper, flipper)
         .andThen(driveWithIntakeWithEvent(path1, intake, swerve, true, "place",
             moveElevatorAndPlace(Height.LOW, elevator, gripper, flipper)))
@@ -80,16 +77,14 @@ public final class Autos {
    */
   public static Command place1andBalanceFromSides(SwerveDrive swerve, Intake intake, Elevator elevator, Gripper gripper,
       Flipper flipper, Path path1) {
-    swerve.setKnownPose(path1.getPath());
     return moveElevatorAndPlace(RobotContainer.getHeightAutonomous(), elevator, gripper, flipper)
-        .andThen(driveWithIntake(path1, intake, swerve, true), swerve.balanceBackward());
+        .andThen(driveWithIntake(path1, intake, swerve), swerve.balanceBackward());
   }
 
   public static Command place1AndDriveForwardFromSides(SwerveDrive swerve, Elevator elevator, Gripper gripper,
       Flipper flipper, Path path1) {
-    swerve.setKnownPose(path1.getPath());
     return moveElevatorAndPlace(RobotContainer.getHeightAutonomous(), elevator, gripper, flipper)
-        .andThen(swerve.driveOnPath(path1, true));
+        .andThen(swerve.followPath(path1));
   }
 
   /**
@@ -106,7 +101,6 @@ public final class Autos {
   public static Command place1andBalanceFromCenter(SwerveDrive swerve, Intake intake, Elevator elevator,
       Gripper gripper,
       Flipper flipper) {
-
     return moveElevatorAndPlace(RobotContainer.getHeightAutonomous(), elevator, gripper, flipper)
         .andThen(swerve.balanceAcrossAndBack());
   }
@@ -151,8 +145,8 @@ public final class Autos {
    * @return the autonomous combo command to drive along a path while turning on
    *         the intake
    */
-  private static Command driveWithIntake(Path path, Intake intake, SwerveDrive swerve, boolean resetToIntial) {
-    return Commands.deadline(swerve.driveOnPath(path, resetToIntial), intake.runIntakeAuton());
+  private static Command driveWithIntake(Path path, Intake intake, SwerveDrive swerve) {
+    return Commands.deadline(swerve.followPath(path), intake.runIntakeAuton());
   }
 
   private Autos() {

@@ -1,7 +1,12 @@
 package frc.robot.subsystems;
 
-import com.ctre.phoenix.motorcontrol.ControlMode;
-import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
+import com.ctre.phoenix6.configs.MotionMagicConfigs;
+import com.ctre.phoenix6.configs.MotorOutputConfigs;
+import com.ctre.phoenix6.configs.SlotConfigs;
+import com.ctre.phoenix6.controls.MotionMagicDutyCycle;
+import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.InvertedValue;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -14,28 +19,26 @@ import frc.robot.Constants.RobotType;
 import frc.robot.RobotContainer.TGR;
 
 public class Elevator extends SubsystemBase {
-    WPI_TalonFX elevatorMotor;
+    TalonFX elevatorMotor;
     boolean testing = true;
     Height targetHeight = Height.OFF;
 
     final static boolean elevatorInverted = (Constants.ROBOTTYPE == RobotType.PBOT) ? false : true;
 
     public Elevator() {
-        elevatorMotor = new WPI_TalonFX(14);
-        elevatorMotor.setInverted(elevatorInverted);
-        elevatorMotor.setSensorPhase(false);
-        elevatorMotor.setSelectedSensorPosition(0);
-        elevatorMotor
-                .configMotionCruiseVelocity(
-                        ELEVATOR.kElevatorCruiseVelocity);
-        elevatorMotor
-                .configMotionAcceleration(ELEVATOR.kElevatorAcceleration);
-        elevatorMotor.configMotionSCurveStrength(2);
-        elevatorMotor.config_kP(0, 0.05);
-        elevatorMotor.config_kI(0, 0);
-        elevatorMotor.config_kD(0, 0.5);
-        elevatorMotor.config_kF(0, 0);
-        elevatorMotor.setSelectedSensorPosition(0);
+        elevatorMotor = new TalonFX(14);
+        var talonFXConfigurator = elevatorMotor.getConfigurator();
+        var motorConfigs = new MotorOutputConfigs();
+        var motionMagicConfigs = new MotionMagicConfigs();
+        var slotConfigs = new SlotConfigs();
+        
+        motorConfigs.withInverted(InvertedValue.Clockwise_Positive).withNeutralMode(NeutralModeValue.Brake);
+        motionMagicConfigs.withMotionMagicCruiseVelocity(ELEVATOR.kElevatorCruiseVelocity).withMotionMagicAcceleration(ELEVATOR.kElevatorAcceleration);
+        slotConfigs.withKP(0.05).withKI(0).withKD(0.5);
+
+        talonFXConfigurator.apply(motorConfigs);
+        talonFXConfigurator.apply(motionMagicConfigs);
+        talonFXConfigurator.apply(slotConfigs);
     }
 
     public void periodic() {
@@ -45,7 +48,7 @@ public class Elevator extends SubsystemBase {
     }
 
     public double getPosition() {
-        return elevatorMotor.getSelectedSensorPosition();
+        return elevatorMotor.getPosition().getValueAsDouble();
     }
 
     public Command goToDesiredHeight() {
@@ -81,11 +84,11 @@ public class Elevator extends SubsystemBase {
     }
 
     private void changeHeight(ELEVATOR.Height height) {
-        elevatorMotor.set(ControlMode.MotionMagic, height.height);
+        elevatorMotor.setControl(new MotionMagicDutyCycle(height.height));
     }
 
     private boolean isCorrectElevatorHeight() {
-        return Math.abs(targetHeight.height - elevatorMotor.getSelectedSensorPosition()) < 4000;
+        return Math.abs(targetHeight.height - getPosition()) < 4000;
     }
 
     public Command elevatorVoltage(double percent) {

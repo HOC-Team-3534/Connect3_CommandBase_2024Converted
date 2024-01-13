@@ -150,13 +150,9 @@ public class RobotContainer {
 		TGR.DTM.tgr()
 				.whileTrue(new ProxyCommand(
 						() -> swerveDrive
-								.followPIDToGridPose(limelight.getGridPose(swerveDrive.getGridPositionRequest())))
+								.followPathtoGridPose(limelight.getGridPose(swerveDrive.getGridPositionRequest())))
 						.andThen(CommandCombos.moveElevatorAndPlace(elevator, gripper, flipper)
 								.unless(() -> !swerveDrive.isGridPoseValid())));
-
-		// TODO create DTM that aligns so the front can extake
-
-		TGR.PrepareBalance.tgr().whileTrue(new ProxyCommand(() -> swerveDrive.squareUp()));
 
 		TGR.ResetWithLimelight.tgr().onTrue(new ProxyCommand(() -> {
 			return swerveDrive.resetPoseToLimelightPose(limelight.getBotPose(false));
@@ -206,7 +202,6 @@ public class RobotContainer {
 	public enum TGR {
 		DTM(driverController.leftTrigger(0.15).and(() -> EnabledDebugModes.DTMEnabled)),
 		Creep(driverController.leftBumper().or(() -> elevator.getCurrentCommand() != null)),
-		PrepareBalance(driverController.a().and(() -> !EnabledDebugModes.CharacterizeEnabled)),
 		Characterize(driverController.a().and(() -> EnabledDebugModes.CharacterizeEnabled)),
 		ResetWithLimelight(driverController.leftStick().and(() -> !DTM.bool())),
 

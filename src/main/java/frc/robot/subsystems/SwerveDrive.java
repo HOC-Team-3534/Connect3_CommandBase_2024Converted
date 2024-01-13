@@ -6,11 +6,14 @@ import java.util.Map;
 import javax.lang.model.util.ElementScanner14;
 
 import com.ctre.phoenix.motorcontrol.NeutralMode;
-import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
-import com.ctre.phoenix.sensors.CANCoder;
-import com.ctre.phoenix.sensors.WPI_Pigeon2;
-import com.pathplanner.lib.PathPlannerTrajectory;
+import com.ctre.phoenix6.configs.MotorOutputConfigs;
+import com.ctre.phoenix6.hardware.CANcoder;
+import com.ctre.phoenix6.hardware.Pigeon2;
+import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.commands.FollowPathWithEvents;
+import com.pathplanner.lib.path.PathPlannerPath;
 
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -48,43 +51,35 @@ public class SwerveDrive extends SwerveSubsystem {
     final static double br_degrees = (Constants.ROBOTTYPE == RobotType.TBOT) ? 23.90
             : (Constants.ROBOTTYPE == RobotType.PBOT) ? 20.39 : 153.37;
     final static boolean loadedConstants = SwerveHelper.loadSwerveConstants();
-    final static WPI_TalonFX FL_drive = new WPI_TalonFX(1);
-    final static WPI_TalonFX FL_steer = new WPI_TalonFX(3);
-    final static CANCoder FL_cancoder = new CANCoder(2);
+    final static TalonFX FL_drive = new TalonFX(1);
+    final static TalonFX FL_steer = new TalonFX(3);
+    final static CANcoder FL_cancoder = new CANcoder(2);
     final static SwerveModule fl = new SwerveModule(FL_drive, FL_steer, FL_cancoder,
             Rotation2d.fromDegrees(fl_degrees));
-    final static WPI_TalonFX FR_drive = new WPI_TalonFX(4);
-    final static WPI_TalonFX FR_steer = new WPI_TalonFX(6);
-    final static CANCoder FR_cancoder = new CANCoder(5);
+    final static TalonFX FR_drive = new TalonFX(4);
+    final static TalonFX FR_steer = new TalonFX(6);
+    final static CANcoder FR_cancoder = new CANcoder(5);
     final static SwerveModule fr = new SwerveModule(FR_drive, FR_steer, FR_cancoder,
             Rotation2d.fromDegrees(fr_degrees));
-    final static WPI_TalonFX BL_drive = new WPI_TalonFX(7);
-    final static WPI_TalonFX BL_steer = new WPI_TalonFX(9);
-    final static CANCoder BL_cancoder = new CANCoder(8);
+    final static TalonFX BL_drive = new TalonFX(7);
+    final static TalonFX BL_steer = new TalonFX(9);
+    final static CANcoder BL_cancoder = new CANcoder(8);
     final static SwerveModule bl = new SwerveModule(BL_drive, BL_steer, BL_cancoder,
             Rotation2d.fromDegrees(bl_degrees));
-    final static WPI_TalonFX BR_drive = new WPI_TalonFX(10);
-    final static WPI_TalonFX BR_steer = new WPI_TalonFX(12);
-    final static CANCoder BR_cancoder = new CANCoder(11);
+    final static TalonFX BR_drive = new TalonFX(10);
+    final static TalonFX BR_steer = new TalonFX(12);
+    final static CANcoder BR_cancoder = new CANcoder(11);
     final static SwerveModule br = new SwerveModule(BR_drive, BR_steer, BR_cancoder,
             Rotation2d.fromDegrees(br_degrees));
-    final static WPI_Pigeon2 pigeon2 = new WPI_Pigeon2(Config.PIGEON2_ID);
+    final static Pigeon2 pigeon2 = new Pigeon2(Config.PIGEON2_ID);
     final static SwerveDrivetrainModel dt = new SwerveDrivetrainModel(fl, fr, bl, br, pigeon2);
     Pose2d gridPose;
     double timeCharacterizing;
     boolean resetThetaController;
     final Field2d field = new Field2d();
-    final ProfiledPIDController xController, yController, thetaController;
 
     public SwerveDrive() {
         super(dt);
-
-        xController = new ProfiledPIDController(1.75, 0, 17.5, new TrapezoidProfile.Constraints(3.5, 2.0));
-        yController = new ProfiledPIDController(1.75, 0, 17.5, new TrapezoidProfile.Constraints(3.5, 2.0));
-        thetaController = new ProfiledPIDController(3, 0, 30,
-                new TrapezoidProfile.Constraints(3.0 * Math.PI, 2.0 * Math.PI));
-
-        thetaController.enableContinuousInput(0, Units.degreesToRadians(360.0));
 
         SmartDashboard.putData("Field", field);
     }
@@ -119,7 +114,7 @@ public class SwerveDrive extends SwerveSubsystem {
     }
 
     private Command fineTuneBalance() {
-        return runOnce(() -> setMotorBrakeMode()).andThen(run(() -> {
+        return runOnce(() -> setAllBrakeMode()).andThen(run(() -> {
             if (getSlope() > 5)
                 driveStraightWithPower(-0.08);
             else if (getSlope() < -5)
@@ -143,33 +138,41 @@ public class SwerveDrive extends SwerveSubsystem {
     }
 
     public Command brake() {
-        return Commands.runOnce(this::setMotorBrakeMode);
+        return Commands.runOnce(this::setAllBrakeMode);
     }
 
-    private void setMotorBrakeMode() {
-        FL_drive.setNeutralMode(NeutralMode.Brake);
-        FR_drive.setNeutralMode(NeutralMode.Brake);
-        BL_drive.setNeutralMode(NeutralMode.Brake);
-        BR_drive.setNeutralMode(NeutralMode.Brake);
+    private void setAllBrakeMode() {
+        setNeutralMode(FL_drive, NeutralModeValue.Brake);
+        setNeutralMode(FR_drive, NeutralModeValue.Brake);
+        setNeutralMode(BL_drive, NeutralModeValue.Brake);
+        setNeutralMode(BR_drive, NeutralModeValue.Brake);
     }
 
     public Command coast() {
-        return Commands.runOnce(this::setMotorCoastMode);
+        return Commands.runOnce(this::setAllCoastMode);
     }
 
-    private void setMotorCoastMode() {
-        FL_drive.setNeutralMode(NeutralMode.Coast);
-        FR_drive.setNeutralMode(NeutralMode.Coast);
-        BL_drive.setNeutralMode(NeutralMode.Coast);
-        BR_drive.setNeutralMode(NeutralMode.Coast);
+    private void setAllCoastMode() {
+        setNeutralMode(FL_drive, NeutralModeValue.Coast);
+        setNeutralMode(FR_drive, NeutralModeValue.Coast);
+        setNeutralMode(BL_drive, NeutralModeValue.Coast);
+        setNeutralMode(BR_drive, NeutralModeValue.Coast);
+    }
+
+    private static void setNeutralMode(TalonFX motor, NeutralModeValue mode) {
+        var motorOutputConfigs = new MotorOutputConfigs();
+
+        motor.getConfigurator().refresh(motorOutputConfigs);
+        motorOutputConfigs.withNeutralMode(mode);
+        motor.getConfigurator().apply(motorOutputConfigs);
     }
 
     public void updatePoseWithVision(Pose2d pose, double latency) {
-        dt.updateOdometryWithVision(pose, latency);
+        dt.updateOdometryWithVision(pose, latency, false);
     }
 
     public double getSlope() {
-        return pigeon2.getPitch() + ((RobotType.PBOT == Constants.ROBOTTYPE) ? -3.0 : -0.5);
+        return pigeon2.getPitch().getValueAsDouble() + ((RobotType.PBOT == Constants.ROBOTTYPE) ? -3.0 : -0.5);
     }
 
     public boolean isFacingForward() {
@@ -179,22 +182,16 @@ public class SwerveDrive extends SwerveSubsystem {
     public Command driveOnPath(Path path, boolean resetToInitial, String eventName, Command eventCommand) {
         Map<String, Command> commands = new HashMap<>();
         commands.put(eventName, eventCommand);
-        var eventMarkers = path.getPath().getMarkers();
-        return new FollowPathWithEvents(driveOnPath(path, resetToInitial), eventMarkers, commands);
+        var eventMarkers = path.getPath().getEventMarkers();
+        return AutoBuilder.followPath(path.getPath());
     }
 
-    public Command driveOnPath(Path path, boolean resetToInitial) {
-        return driveOnPath(path.getPath(), resetToInitial);
+    public void setKnownPose(Path path) {
+        dt.setKnownPose(path.getPath().getPreviewStartingHolonomicPose());
     }
 
-    public void setKnownPose(PathPlannerTrajectory trajectory) {
-        var initialState = PathPlannerTrajectory.transformStateForAlliance(trajectory.getInitialState(),
-                DriverStation.getAlliance());
-        dt.setKnownPose(new Pose2d(initialState.poseMeters.getTranslation(), initialState.holonomicRotation));
-    }
-
-    public Command driveOnPath(PathPlannerTrajectory trajectory, boolean resetToInitial) {
-        return dt.createCommandForTrajectory(trajectory, this, false, true);
+    public Command followPath(Path path) {
+        return dt.followPath(path.getPath());
     }
 
     /**
@@ -212,36 +209,6 @@ public class SwerveDrive extends SwerveSubsystem {
 
         command.setName("Drive Manually");
         return command;
-    }
-
-    public Command squareUp() {
-        // put from -180 to 180
-        var ang = dt.getGyroHeading().rotateBy(new Rotation2d()).getDegrees();
-        if (ang < 45 && ang > -45)
-            return driveWithDesiredAngle(new Rotation2d());
-        else if (ang > 135 || ang < -135)
-            return driveWithDesiredAngle(Rotation2d.fromDegrees(180));
-        else if (ang < 135 && ang > 45)
-            return driveWithDesiredAngle(Rotation2d.fromDegrees(90));
-        else
-            return driveWithDesiredAngle(Rotation2d.fromDegrees(270));
-    }
-
-    /**
-     * Drives the robot using forward backward and left right inputs. The robot will
-     * rotate to the desired angle. Has Creep mode to move the robot at a lower
-     * speed
-     *
-     * @param rot Desired angle to rotate the robot to
-     * @return The command that moves the robot with desired angle
-     */
-    public Command driveWithDesiredAngle(Rotation2d rot) {
-        return runOnce(() -> resetThetaController = true).andThen(run(() -> {
-            dt.setModuleStates(new SwerveInput(AXS.Drive_ForwardBackward.getAxis(),
-                    AXS.Drive_LeftRight.getAxis(),
-                    0), rot, TGR.Creep.bool(), resetThetaController);
-            resetThetaController = false;
-        }));
     }
 
     /**
@@ -282,28 +249,8 @@ public class SwerveDrive extends SwerveSubsystem {
         this.gridPose = gridPose;
         if (gridPose == null)
             return Commands.print("Grid Pose Null");
-        return dt.createOnTheFlyPathCommand(gridPose,
-                gridPose.getTranslation().minus(dt.getPose().getTranslation()).getAngle(), 0.0,
-                AUTO.kMaxSpeedMetersPerSecond, AUTO.kMaxAccelerationMetersPerSecondSquared, this);
-    }
-
-    public Command followPIDToGridPose(Pose2d gridPose) {
-        this.gridPose = gridPose;
-        if (gridPose == null)
-            return Commands.none();
-        xController.reset(getPose().getX());
-        yController.reset(getPose().getY());
-        thetaController.reset(getPose().getRotation().getRadians());
-        xController.setGoal(gridPose.getX());
-        yController.setGoal(gridPose.getY());
-        thetaController.setGoal(gridPose.getRotation().getRadians());
-        return run(() -> {
-            dt.setModuleStates(new ChassisSpeeds(xController.calculate(getPose().getX()),
-                    yController.calculate(getPose().getY()),
-                    thetaController.calculate(getPose().getRotation().getRadians())),
-                    false);
-
-        });
+        return dt.pathfindToPose(gridPose, 0.0,
+                AUTO.kMaxSpeedMetersPerSecond, AUTO.kMaxAccelerationMetersPerSecondSquared, AUTO.kMaxAngularSpeedRadiansPerSecond, AUTO.kMaxAngularSpeedRadiansPerSecondSquared);
     }
 
     /**
