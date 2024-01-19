@@ -19,6 +19,8 @@ import frc.robot.subsystems.SwerveDrive;
 
 import java.util.concurrent.Callable;
 
+import com.pathplanner.lib.auto.NamedCommands;
+
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -67,6 +69,9 @@ public class RobotContainer {
 		intake.setDefaultCommand(intake.runIntake());
 		lights.setDefaultCommand(lights.runLights());
 		flipper.setDefaultCommand(flipper.makeSureDown());
+
+		NamedCommands.registerCommand("place game piece",
+				Autos.moveElevatorAndPlace(Height.LOW, elevator, gripper, flipper));
 
 		// Autonomous Command Sendable Chooser
 		autonChooser.setDefaultOption("No Auton", () -> Commands.none());

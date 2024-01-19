@@ -1,6 +1,7 @@
 package frc.robot.subsystems;
 
-import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
+import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.hardware.TalonFX;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -8,15 +9,15 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.RobotContainer.TGR;
 
 public class Intake extends SubsystemBase {
-    WPI_TalonFX topMotor, botMotor;
+    TalonFX topMotor, botMotor;
     boolean testing = false;
 
     public Intake() {
         if (!testing) {
-            topMotor = new WPI_TalonFX(15);
-            botMotor = new WPI_TalonFX(16);
-            topMotor.configFactoryDefault();
-            botMotor.configFactoryDefault();
+            topMotor = new TalonFX(15);
+            botMotor = new TalonFX(16);
+            topMotor.getConfigurator().apply(new TalonFXConfiguration());
+            botMotor.getConfigurator().apply(new TalonFXConfiguration());
             topMotor.setInverted(true);
             botMotor.setInverted(true);
         }

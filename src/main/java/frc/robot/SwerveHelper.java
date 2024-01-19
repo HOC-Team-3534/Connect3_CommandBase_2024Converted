@@ -1,44 +1,60 @@
 package frc.robot;
 
+import com.ctre.phoenix6.configs.SlotConfigs;
+import com.pathplanner.lib.util.HolonomicPathFollowerConfig;
+import com.pathplanner.lib.util.PIDConstants;
+import com.pathplanner.lib.util.ReplanningConfig;
+
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import frc.robot.Constants.Drive;
-import frc.robot.Constants.RobotType;
+import frc.robot.Constants.Drive.AUTO;
 import swerve.SDSModuleConfiguration;
-import swerve.SwerveConstants;
+import swerve.params.PoseEstimationStandardDeviations;
+import swerve.params.RobotMaxKinematics;
+import swerve.params.SwerveParams;
 
 public class SwerveHelper {
-        public static boolean loadSwerveConstants() {
-                // TODO determine CBOT characterization values
-                double ks = (Constants.ROBOTTYPE == RobotType.TBOT) ? 0.293
-                                : (Constants.ROBOTTYPE == RobotType.PBOT) ? .31 : 0.0;
-                double kv = (Constants.ROBOTTYPE == RobotType.TBOT) ? 2.367
-                                : (Constants.ROBOTTYPE == RobotType.PBOT) ? 2.382 : 0.0;
-                double ka = (Constants.ROBOTTYPE == RobotType.TBOT) ? 0.0379
-                                : (Constants.ROBOTTYPE == RobotType.PBOT) ? 0.031 : 0.0;
+        public static SwerveParams loadSwerveParams() {
+                var driveSlotConfigs = new SlotConfigs();
+                switch (Constants.ROBOTTYPE) {
+                        case CBOT:
+                                driveSlotConfigs.withKS(0.31).withKV(2.382).withKA(0.031);
+                                break;
+                        case PBOT:
+                                driveSlotConfigs.withKS(0.31).withKV(2.382).withKA(0.031);
+                                break;
+                        case TBOT:
+                                driveSlotConfigs.withKS(0.293).withKV(2.367).withKA(0.0379);
+                                break;
+                        default:
+                                break;
+
+                }
+                driveSlotConfigs.kS /= 12;
+                driveSlotConfigs.kV /= 12;
+                driveSlotConfigs.kA /= 12;
                 var config = Constants.Drive.Known.SDS_MODULE_CONFIGURATION;
-                // TODO determine if CBOT wheel diameter differs
                 var newConfig = new SDSModuleConfiguration(Units.inchesToMeters(3.81),
                                 config.angleGearRatio,
                                 config.driveGearRatio,
-                                config.angleKP,
-                                config.angleKI,
-                                config.angleKD,
-                                config.angleKF,
+                                config.angleSlotConfigs,
                                 config.driveMotorInvert,
                                 config.angleMotorInvert,
-                                config.canCoderInvert);
-                SwerveConstants.fillNecessaryConstantsForFalcon(Drive.Calculated.MAX_FWD_REV_SPEED_MPS_EST,
-                                Drive.Calculated.MAX_ROTATE_SPEED_RAD_PER_SEC_EST, 2 * Math.PI,
-                                Drive.Calculated.KINEMATICS, newConfig,
-                                0.1, ks / 12.0, kv / 12.0, ka / 12.0, 3.0, 3.0, 1, 1, 0.25, 0.25);
-                SwerveConstants.createSwerveConstants();
-                SwerveConstants.modulePoseEstXStdDev = 0.1;
-                SwerveConstants.modulePoseEstYStdDev = 0.1;
-                SwerveConstants.modulePoseEstAngleStdDev = Rotation2d.fromDegrees(0.01);
-                SwerveConstants.visionPoseEstXStdDev = 0.15;
-                SwerveConstants.visionPoseEstYStdDev = 0.15;
-                SwerveConstants.visionPoseEstAngleStdDev = Rotation2d.fromDegrees(0.25);
-                return true;
+                                config.canCoderSensorDirection);
+
+                var modulePoseEstStdDev = new PoseEstimationStandardDeviations(0.1, 0.1, Rotation2d.fromDegrees(0.01));
+                var visionPoseEstStdDev = new PoseEstimationStandardDeviations(0.15, 0.15,
+                                Rotation2d.fromDegrees(0.25));
+                var maxKinematics = new RobotMaxKinematics(Drive.Calculated.MAX_FWD_REV_SPEED_MPS_EST,
+                                Drive.Calculated.MAX_ROTATE_SPEED_RAD_PER_SEC_EST, 2 * Math.PI);
+                var holoConfig = new HolonomicPathFollowerConfig(new PIDConstants(10), new PIDConstants(10),
+                                AUTO.kPathConstraints.getMaxVelocityMps(), Drive.Calculated.WHEELBASE_RADIUS,
+                                new ReplanningConfig());
+
+                return new SwerveParams(maxKinematics, Drive.Calculated.KINEMATICS, newConfig, holoConfig,
+                                driveSlotConfigs,
+                                modulePoseEstStdDev,
+                                visionPoseEstStdDev);
         }
 }

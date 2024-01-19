@@ -57,8 +57,7 @@ public final class Autos {
   public static Command place2FromSidesAndBalance(SwerveDrive swerve, Intake intake, Elevator elevator, Gripper gripper,
       Flipper flipper, Path path1) {
     return moveElevatorAndPlace(RobotContainer.getHeightAutonomous(), elevator, gripper, flipper)
-        .andThen(driveWithIntakeWithEvent(path1, intake, swerve, true, "place",
-            moveElevatorAndPlace(Height.LOW, elevator, gripper, flipper)))
+        .andThen(driveWithIntake(path1, intake, swerve))
         .andThen(swerve.balanceForward());
   }
 
@@ -114,26 +113,10 @@ public final class Autos {
    * @return the autonomomous combo command to moe the elevator to desired height
    *         and then place the game element and bring the elevator back down
    */
-  private static Command moveElevatorAndPlace(Height height, Elevator elevator, Gripper gripper, Flipper flipper) {
+  public static Command moveElevatorAndPlace(Height height, Elevator elevator, Gripper gripper, Flipper flipper) {
     return elevator.goToDesiredHeight(height).withTimeout(3.0)
         .andThen(gripper.ungrip().withTimeout(0.1), flipper.flipUp().asProxy().withTimeout(3.0))
         .finallyDo((interrupted) -> elevator.setPowerZero());
-  }
-
-  /**
-   * 
-   * @param path          the path to follow
-   * @param intake        the intake subsystem
-   * @param swerve        the swerve drive subsystem
-   * @param resetToIntial should the position be reset to the start of the path
-   * @param eventName     name of the event from path plannner
-   * @param eventCommand  the command to run when the event on the path happens
-   * @return the autonomous combo command to drive along a path while turning on
-   *         the intake
-   */
-  private static Command driveWithIntakeWithEvent(Path path, Intake intake, SwerveDrive swerve, boolean resetToIntial,
-      String eventName, Command eventCommand) {
-    return Commands.deadline(swerve.driveOnPath(path, resetToIntial, eventName, eventCommand), intake.runIntakeAuton());
   }
 
   /**

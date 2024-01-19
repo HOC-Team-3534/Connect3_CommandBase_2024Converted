@@ -3,9 +3,10 @@
 // the WPILib BSD license file in the root directory of this project.
 package frc.robot;
 
+import com.pathplanner.lib.path.PathConstraints;
+
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
-import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import swerve.SDSModuleConfiguration;
 
 /**
@@ -50,20 +51,17 @@ public final class Constants {
     }
 
     public static final class Calculated {
-      public static final SwerveDriveKinematics KINEMATICS = new SwerveDriveKinematics(
-          new Translation2d(Drive.Known.TRACKWIDTH_METERS / 2.0,
-              Drive.Known.WHEELBASE_METERS / 2.0),
-          new Translation2d(Drive.Known.TRACKWIDTH_METERS / 2.0,
-              -Drive.Known.WHEELBASE_METERS / 2.0),
-          new Translation2d(-Drive.Known.TRACKWIDTH_METERS / 2.0,
-              Drive.Known.WHEELBASE_METERS / 2.0),
-          new Translation2d(-Drive.Known.TRACKWIDTH_METERS / 2.0,
-              -Drive.Known.WHEELBASE_METERS / 2.0));
+      static final Translation2d FL_POS = new Translation2d(Drive.Known.TRACKWIDTH_METERS / 2.0,
+          Drive.Known.WHEELBASE_METERS / 2.0);
+      static final Translation2d FR_POS = new Translation2d(-FL_POS.getX(), FL_POS.getY());
+      public static final double WHEELBASE_RADIUS = FL_POS.getNorm();
+      public static final SwerveDriveKinematics KINEMATICS = new SwerveDriveKinematics(FL_POS, FR_POS,
+          FR_POS.unaryMinus(), FL_POS.unaryMinus());
       // Drivetrain Performance Mechanical limits
       static public final double MAX_FWD_REV_SPEED_MPS_EST = Known.MAX_DRIVE_MOTOR_RPM / 60.0
           / Known.SDS_MODULE_CONFIGURATION.driveGearRatio * Known.SDS_MODULE_CONFIGURATION.wheelCircumference;
       static public final double MAX_ROTATE_SPEED_RAD_PER_SEC_EST = MAX_FWD_REV_SPEED_MPS_EST
-          / Math.hypot(Known.TRACKWIDTH_METERS / 2.0, Known.WHEELBASE_METERS / 2.0);
+          / (Math.PI * Math.pow(WHEELBASE_RADIUS, 2)) * 2 * Math.PI;
       static public final double MAX_ROTATE_SPEED_RAD_PER_SEC_MOTOR_EST = Known.MAX_DRIVE_MOTOR_RPM / 60
           / Known.SDS_MODULE_CONFIGURATION.angleGearRatio * 2 * Math.PI;
     }
@@ -98,17 +96,7 @@ public final class Constants {
     }
 
     public static final class AUTO {
-      public static final double kMaxSpeedMetersPerSecond = 3.5;
-      public static final double kMaxAccelerationMetersPerSecondSquared = 2.0;
-      public static final double kMaxAngularSpeedRadiansPerSecond = Math.PI;
-      public static final double kMaxAngularSpeedRadiansPerSecondSquared = Math.PI;
-      public static final double TRAJECTORYXkP = 10;
-      public static final double TRAJECTORYYkP = 10;
-      public static final double THETACONTROLLERkP = 10;
-      // Constraint for the motion profilied robot angle controller
-      public static final TrapezoidProfile.Constraints THETACONTROLLERCONSTRAINTS = new TrapezoidProfile.Constraints(
-          kMaxAngularSpeedRadiansPerSecond,
-          kMaxAngularSpeedRadiansPerSecondSquared);
+      public static PathConstraints kPathConstraints = new PathConstraints(3.5, 2.0, Math.PI, Math.PI);
     }
   }
 

@@ -1,6 +1,5 @@
 package frc.robot.subsystems;
 
-import java.io.IOException;
 import java.util.function.Consumer;
 
 import org.photonvision.PhotonCamera;
@@ -24,21 +23,16 @@ public class PhotonVisionCamera extends SubsystemBase {
             new Rotation3d(0, Units.degreesToRadians(3), 0));
 
     public PhotonVisionCamera() {
-        try {
-            aprilTagFieldLayout = AprilTagFields.k2023ChargedUp.loadAprilTagLayoutField();
-            switch (DriverStation.getAlliance().get()) {
-                case Blue:
-                    aprilTagFieldLayout.setOrigin(AprilTagFieldLayout.OriginPosition.kBlueAllianceWallRightSide);
-                    break;
-                case Red:
-                    aprilTagFieldLayout.setOrigin(AprilTagFieldLayout.OriginPosition.kRedAllianceWallRightSide);
-                    break;
-                default:
-                    break;
-            }
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+        aprilTagFieldLayout = AprilTagFields.k2023ChargedUp.loadAprilTagLayoutField();
+        switch (DriverStation.getAlliance().get()) {
+            case Blue:
+                aprilTagFieldLayout.setOrigin(AprilTagFieldLayout.OriginPosition.kBlueAllianceWallRightSide);
+                break;
+            case Red:
+                aprilTagFieldLayout.setOrigin(AprilTagFieldLayout.OriginPosition.kRedAllianceWallRightSide);
+                break;
+            default:
+                break;
         }
     }
 
